@@ -1,0 +1,489 @@
+﻿@using System.Security.Claims
+@using ASI.Basecode.Data.Models
+@using ASI.Basecode.Data.Repositories
+@using ASI.Basecode.WebApp.Repository
+@using ASI.Basecode.WebApp.Utils
+@using ASI.Basecode.WebApp.Functions
+@using ASI.Basecode.Resources.Constants;
+@using ASI.Basecode.Data;
+
+@{
+    var tableId = string.Empty;
+
+    if (ViewData["TableId"] != null)
+    {
+        tableId = ViewData["TableId"].ToString();
+    }
+
+    var role = User.FindFirst("UserRole")?.Value;
+
+    BaseRepository<Notification> _notifRepo = new BaseRepository<Notification>();
+    int userId = int.Parse(User.FindFirstValue("UserId"));
+    var countNotif = _notifRepo.Table.Where(m => m.ToUserId == userId && (m.IsRead == null || m.IsRead == (byte)Enums.NotifStatus.NotRead)).Select(m => m.NotificationId).Count();
+}
+
+<!-- meta tags and other links -->
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssistHub - @ViewData["Title"]</title>
+    <link rel="icon" type="image/png" href="~/assets/images/favicon.png" sizes="16x16">
+    <!-- bootstrap fonts css-->
+    <link href="~/bootstrapfonts/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <!-- remix icon font css  -->
+    <link href="~/assets/css/remixicon.css" rel="stylesheet" />
+    <!-- BootStrap css -->
+    <link href="~/assets/css/lib/bootstrap.min.css" rel="stylesheet" />
+    <!-- Apex Chart css -->
+    <link href="~/assets/css/lib/apexcharts.css" rel="stylesheet" />
+    <!-- Data Table css -->
+    <link href="~/datatables/datatables.css" rel="stylesheet" />
+    <!-- Text Editor css -->
+    <link href="~/assets/css/lib/editor-katex.min.css" rel="stylesheet" />
+    <link href="~/assets/css/lib/editor.atom-one-dark.min.css" rel="stylesheet" />
+    <link href="~/assets/css/lib/editor.quill.snow.css" rel="stylesheet" />
+    <!-- Date picker css -->
+    <link href="~/assets/css/lib/flatpickr.min.css" rel="stylesheet" />
+    <!-- Calendar css -->
+    <link href="~/assets/css/lib/full-calendar.css" rel="stylesheet" />
+    <!-- Vector Map css -->
+    <link href="~/assets/css/lib/jquery-jvectormap-2.0.5.css" rel="stylesheet" />
+    <!-- Popup css -->
+    <link href="~/assets/css/lib/magnific-popup.css" rel="stylesheet" />
+    <!-- Slick Slider css -->
+    <link href="~/assets/css/lib/slick.css" rel="stylesheet" />
+    <!-- main css -->
+    <link href="~/assets/css/style.css" rel="stylesheet" />
+    <!--toastr css-->
+    <link href="~/toastr/toastr.min.css" rel="stylesheet" />
+</head>
+
+<body>
+    <aside class="sidebar">
+        <button type="button" class="sidebar-close-btn">
+            <iconify-icon icon="radix-icons:cross-2"></iconify-icon>
+        </button>
+        <div>
+            @if (@User.IsInRole("superadmin"))
+            {
+                <a asp-action="SuperAdminDashboard" asp-controller="user" class="sidebar-logo">
+                    <h5 style="margin-left: 25px; margin-top: 10px;" class="brand-name-expand">AssistHub</h5>
+                    <h5 class="brand-name-collapse">AH</h5>
+                </a>
+            }
+            else if (@User.IsInRole("administrator"))
+            {
+                <a asp-action="AdminDashboard" asp-controller="Dashboard">
+                    <h5 style="margin-left: 25px; margin-top: 10px;" class="brand-name-expand">AssistHub</h5>
+                    <h5 class="brand-name-collapse">AH</h5>
+                </a>
+            }
+            else if (@User.IsInRole("support agent"))
+            {
+                <a asp-action="AgentDashboard" asp-controller="Dashboard">
+                    <h5 style="margin-left: 25px; margin-top: 10px;" class="brand-name-expand">AssistHub</h5>
+                    <h5 class="brand-name-collapse">AH</h5>
+                </a>
+            }
+            else if (@User.IsInRole("user"))
+            {
+                <a asp-action="UserDashboard" asp-controller="Dashboard">
+                    <h5 style="margin-left: 25px; margin-top: 10px;" class="brand-name-expand">AssistHub</h5>
+                    <h5 class="brand-name-collapse">AH</h5>
+                </a>
+            }
+        </div>
+        <div class="sidebar-menu-area">
+            <ul class="sidebar-menu" id="sidebar-menu">
+                <li>
+                    @if (@User.IsInRole("superadmin"))
+                    {
+                        <a asp-action="SuperAdminDashboard" asp-controller="Dashboard">
+                            <iconify-icon icon="solar:home-smile-angle-outline" class="menu-icon"></iconify-icon>
+                            <span>Dashboard</span>
+                        </a>
+                    }
+                    else if (@User.IsInRole("administrator"))
+                    {
+                        <a asp-action="AdminDashboard" asp-controller="Dashboard">
+                            <iconify-icon icon="solar:home-smile-angle-outline" class="menu-icon"></iconify-icon>
+                            <span>Dashboard</span>
+                        </a>
+                    }
+                    else if (@User.IsInRole("support agent"))
+                    {
+                        <a asp-action="AgentDashboard" asp-controller="Dashboard">
+                            <iconify-icon icon="solar:home-smile-angle-outline" class="menu-icon"></iconify-icon>
+                            <span>Dashboard</span>
+                        </a>
+                    }
+                    else if (@User.IsInRole("user"))
+                    {
+                        <a asp-action="UserDashboard" asp-controller="Dashboard">
+                            <iconify-icon icon="solar:home-smile-angle-outline" class="menu-icon"></iconify-icon>
+                            <span>Dashboard</span>
+                        </a>
+                    }
+
+                </li>
+
+
+                <li>
+                    @if (!User.IsInRole("superadmin") && !User.IsInRole("administrator"))
+                    {
+     @*                    NotificationManager _notifManager = new NotificationManager();
+                        int? userId = int.Parse(User.FindFirstValue("UserId")); *@
+
+
+                        <a asp-controller="Notification" asp-action="List" class="d-flex align-items-center">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <iconify-icon style="margin-right: 4.5% !important; " icon="flowbite:users-group-outline" class="menu-icon me-2" aria-hidden="true"></iconify-icon>
+                                <span class="me-auto">Notifications</span>
+                                @if(countNotif > 0)
+                                {
+                                    <span class="badge text-sm bg-danger-500 border-0 d-flex justify-content-center align-items-center"
+                                          style="border-radius: 50%; width: 20px; height: 20px; color: white; font-weight: bold;">
+                                        @countNotif
+                                    </span>
+                                }
+                         
+                            </div>
+                        </a>
+                    }
+                </li>
+
+
+                <li>
+                    @if (@User.IsInRole("superadmin"))
+                    {
+                        <a asp-controller="ManageAdmin" asp-action="Index">
+                            <iconify-icon icon="flowbite:users-group-outline" class="menu-icon"></iconify-icon>
+                            <span>Manage Admin Users</span>
+                        </a>
+                    }
+                    else if (@User.IsInRole("administrator"))
+                    {
+                        <a asp-controller="ManageUser" asp-action="Index">
+                            <iconify-icon icon="flowbite:users-group-outline" class="menu-icon"></iconify-icon>
+                            <span>Manage Users</span>
+                        </a>
+                        <a asp-controller="Ticket" asp-action="AdministratorTicketIndex">
+                            <iconify-icon icon="mdi:ticket-outline" class="menu-icon"></iconify-icon>
+                            <span>Manage Tickets</span>
+                        </a>
+                        <a asp-controller="Feedback" asp-action="Index">
+                            <iconify-icon icon="mdi:message-star-outline" class="menu-icon"></iconify-icon>
+                            <span>Agent Feedbacks</span>
+                        </a>
+                        <a asp-controller="ManageArticle" asp-action="Index">
+                            <iconify-icon icon="solar:document-add-outline" class="menu-icon"></iconify-icon>
+                            <span>Manage Articles</span>
+                        </a>
+                    }
+                    else if (@User.IsInRole("support agent"))
+                    {
+                        <a asp-controller="Ticket" asp-action="AgentTicketIndex">
+                            <iconify-icon icon="mdi:ticket-outline" class="menu-icon"></iconify-icon>
+                            <span>Manage Tickets</span>
+                        </a>
+                        <a asp-controller="Feedback" asp-action="Index">
+                            <iconify-icon icon="mdi:message-star-outline" class="menu-icon"></iconify-icon>
+                            <span>Feedbacks</span>
+                        </a>
+                        <a asp-controller="ManageArticle" asp-action="Index">
+                            <iconify-icon icon="solar:document-add-outline" class="menu-icon"></iconify-icon>
+                            <span>Manage Articles</span>
+                        </a>
+
+                    }
+                    else if (@User.IsInRole("user"))
+                    {
+                        <a asp-controller="Ticket" asp-action="UserTicketIndex">
+                            <iconify-icon icon="mdi:ticket-outline" class="menu-icon"></iconify-icon>
+                            <span>My Tickets</span>
+                        </a>
+                        <a asp-controller="Feedback" asp-action="Index">
+                            <iconify-icon icon="mdi:message-star-outline" class="menu-icon"></iconify-icon>
+                            <span>My Feedbacks</span>
+                        </a>
+                        <a asp-controller="ManageArticle" asp-action="Index">
+                            <iconify-icon icon="solar:document-add-outline" class="menu-icon"></iconify-icon>
+                            <span>Articles</span>
+                        </a>
+ @*                        <a asp-controller="Chat" asp-action="Index">
+                            <iconify-icon icon="icon-park-twotone:inbox" class="menu-icon"></iconify-icon>
+                            <span>Inbox</span>
+                        </a> *@
+                    }
+                </li>
+@*                 <li>
+                    <a asp-action="EditProfile" asp-controller="Account">
+                        <iconify-icon icon="flowbite:user-outline" class="menu-icon"></iconify-icon>
+                        <span>Profile</span>
+                    </a>
+                </li> *@
+                <li>
+                    <a asp-controller="Report" asp-action="Index">
+                        <iconify-icon icon="heroicons:document" class="menu-icon"></iconify-icon>
+                        <span>Reports</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </aside>
+
+    <main class="dashboard-main">
+        <div class="navbar-header">
+            <div class="row align-items-center justify-content-between">
+                <div class="col-auto">
+                    <div class="d-flex flex-wrap align-items-center gap-4">
+                        <button type="button" class="sidebar-toggle">
+                            <iconify-icon icon="heroicons:bars-3-solid" class="icon text-2xl non-active"></iconify-icon>
+                            <iconify-icon icon="iconoir:arrow-right" class="icon text-2xl active"></iconify-icon>
+                        </button>
+                        <button type="button" class="sidebar-mobile-toggle">
+                            <iconify-icon icon="heroicons:bars-3-solid" class="icon"></iconify-icon>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+                        <button type="button" data-theme-toggle
+                                class="w-40-px h-40-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center"></button>
+
+                        @if (!User.IsInRole("superadmin") && !User.IsInRole("administrator"))
+                        {                       
+                            List<Notification> _userNotif = _notifRepo.Table.Where(m => m.ToUserId == userId).OrderByDescending(m => m.CreatedAt).ToList();
+                            UserManager _userManager = new UserManager();
+
+
+                            <div class="dropdown">
+                                @* <button class="has-indicator w-40-px h-40-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center"
+                                        type="button" data-bs-toggle="dropdown">
+                                    <iconify-icon icon="iconoir:bell" class="text-primary-light text-xl"></iconify-icon>
+                                </button> *@
+                                <button class="has-indicator w-40-px h-40-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <iconify-icon icon="iconoir:bell" class="text-primary-light text-xl"></iconify-icon>
+                                    @if (countNotif > 0)
+                                    {
+                                        <span style="margin-top: 5px" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger-600 border-0">@countNotif</span>
+                                    }
+                                </button>
+
+
+
+                                <div class="dropdown-menu to-top dropdown-menu-lg p-0">
+                                    <div class="m-16 py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2">
+                                        <div>
+                                            <h6 class="text-lg text-primary-light fw-semibold mb-0">Notifications</h6>
+                                        </div>
+                                        <span class="text-primary-600 fw-semibold text-lg w-40-px h-40-px rounded-circle bg-base d-flex justify-content-center align-items-center">@countNotif</span>
+                                    </div>
+
+                                    <div class="max-h-400-px overflow-y-auto scroll-sm pe-4">
+              
+                                        @foreach (var notif in _userNotif)
+                                        {
+
+                                            var timeElapsed = Helper.GetTimeElapsed(
+                                            Utilities.TimeZoneConverter.ConvertTimeZone(DateTime.UtcNow) - (notif.CreatedAt ?? DateTime.UtcNow), notif.CreatedAt ?? DateTime.UtcNow);
+
+
+                                            int? ticketId = 0;
+                                            using (var db = new AssisthubDBContext())
+                                            {
+                                                ticketId = db.UserTickets.Where(m => m.UserTicketId == notif.UserTicketId).FirstOrDefault().TicketId;
+                                            }
+
+                                            string actionRoute = null;
+                                            if (User.IsInRole("user"))
+                                            {
+                                                actionRoute = Url.Action("Details", "UserTicket", new { id = ticketId, NotificationId = notif.NotificationId });
+                                            }
+                                            else if (User.IsInRole("support agent"))
+                                            {
+                                                actionRoute = Url.Action("Edit", "AgentManageTicket", new { id = ticketId, NotificationId = notif.NotificationId });
+                                            }
+
+                                            <a href="@actionRoute"
+                                                class="px-24 py-12 d-flex align-items-start gap-3 mb-2 justify-content-between">
+                                                <div class="text-black hover-bg-transparent hover-text-primary d-flex align-items-center gap-3">
+                                                    <span class="w-44-px h-44-px bg-success-subtle text-success-main rounded-circle d-flex justify-content-center align-items-center flex-shrink-0">
+                                                        <img src="~/notifpics/notification.png" />
+                                                    </span>
+												<div>                                   
+                                                        <h6 class="text-md fw-semibold mb-4">
+                                                            @(User.IsInRole("user") == true ? ("Support Agent") : ("System Message"))
+                                                        </h6>
+
+                                                        <p class="mb-0 text-sm text-secondary-light text-w-200-px">
+                                                            @notif.Content
+                                                        </p>
+                                                </div>
+                                                </div>
+                                                <span class="text-sm text-secondary-light flex-shrink-0 text-truncate" style="max-width: 100px; position: relative;" title="@timeElapsed">
+                                                    @timeElapsed
+                                                    <span style="margin-left: 15px">
+                                                        @if (notif.IsRead == (byte)Enums.NotifStatus.NotRead || notif.IsRead == null)
+                                                        {
+                                                            <i class="ri-circle-fill circle-icon text-danger-main" style="font-size: 10px; position: absolute; top: 0; right: 0; z-index: 1;"></i>
+                                                        }
+                                                    </span>
+                                              
+                                                </span>
+
+                                            </a>
+                                        }
+
+
+                                    </div>
+
+                                    <div class="text-center py-12 px-16">
+                                        <a href="@Url.Action("List","Notification")" class="text-primary-600 fw-semibold text-md">See All Notification</a>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <!-- Notification dropdown end -->
+                        }
+
+                        <div class="dropdown">
+                            <button class="d-flex justify-content-center align-items-center rounded-circle" type="button"
+                                    data-bs-toggle="dropdown">
+                                @if (string.IsNullOrEmpty(User.FindFirst("ProfilePicPath")?.Value))
+                                {
+                                    <img src="~/profilepics/noprofile.png" alt="image"
+                                    class="w-40-px h-40-px object-fit-cover rounded-circle">
+                                } else
+                                {
+                                    <img src="@User.FindFirst("ProfilePicPath")?.Value" alt="image"
+                                         class="w-40-px h-40-px object-fit-cover rounded-circle">
+                                }
+                            </button>
+                            <div class="dropdown-menu to-top dropdown-menu-sm">
+                                <div class="py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2">
+                                    <div>
+                                        <h6 class="text-lg text-primary-light fw-semibold mb-2">
+                                            @if (User.Identity.IsAuthenticated)
+                                            {
+                                                @User.Identity.Name
+                                                <br />
+                                                <span class="text-secondary-light fw-medium text-sm">@role.ToUpper()</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Not logged in</span>
+                                                <br />
+                                                <span class="text-secondary-light fw-medium text-sm">Not logged in</span>
+
+                                            }
+                                        </h6>
+                                    </div>
+                                    <button type="button" class="hover-text-danger">
+                                        <iconify-icon icon="radix-icons:cross-1" class="icon text-xl"></iconify-icon>
+                                    </button>
+                                </div>
+                                <ul class="to-top-list">
+                                    <li>
+                                        <a class="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3"
+                                           asp-action="EditProfile" asp-controller="Account">
+                                            <iconify-icon icon="solar:user-linear" class="icon text-xl"></iconify-icon> My Profile
+                                        </a>
+                                    </li> 
+                                   
+@*                                     <li>
+                                        <a class="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3"
+                                           href="email.html">
+                                            <iconify-icon icon="tabler:message-check" class="icon text-xl"></iconify-icon> Inbox
+                                        </a>
+                                    </li> *@
+                                    <li>
+                                        <a class="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3"
+                                           href="company.html">
+                                            <iconify-icon icon="icon-park-outline:setting-two" class="icon text-xl"></iconify-icon>
+                                            Setting
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-danger d-flex align-items-center gap-3"
+                                           asp-controller="Account" asp-action="SignOutUser">
+                                            <iconify-icon icon="lucide:power" class="icon text-xl"></iconify-icon> Log Out
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div><!-- Profile dropdown end -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-main-body">
+            <partial name="_Notification" />
+            @RenderBody()
+            @* <partial name="_Chat"/> *@
+        </div>
+
+        <footer class="d-footer">
+            <div class="row align-items-center justify-content-between">
+                <div class="col-auto">
+                    <p class="mb-0">© 2024 AssistHub. All Rights Reserved.</p>
+                </div>
+                <div class="col-auto">
+                    <p class="mb-0">Made by <span class="text-primary-600">CodeBlooded-Alliance</span></p>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <!-- jQuery library js -->
+    <script src="~/assets/js/lib/jquery-3.7.1.min.js"></script>
+    <!-- Bootstrap js -->
+    <script src="~/assets/js/lib/bootstrap.bundle.min.js"></script>
+    <!-- Apex Chart js -->
+    <script src="~/assets/js/lib/apexcharts.min.js"></script>
+    @*     <!-- Data Table js -->
+    <script src="~/assets/js/lib/dataTables.min.js"></script> *@
+    <script src="~/datatables/datatables.js"></script>
+    <!-- Iconify Font js -->
+    <script src="~/assets/js/lib/iconify-icon.min.js"></script>
+    <!-- jQuery UI js -->
+    <script src="~/assets/js/lib/jquery-ui.min.js"></script>
+    <!-- Vector Map js -->
+    <script src="~/assets/js/lib/jquery-jvectormap-2.0.5.min.js"></script>
+    <script src="~/assets/js/lib/jquery-jvectormap-world-mill-en.js"></script>
+    <!-- Popup js -->
+    <script src="~/assets/js/lib/magnifc-popup.min.js"></script>
+    <!-- Slick Slider js -->
+    <script src="~/assets/js/lib/slick.min.js"></script>
+    <!-- main js -->
+    <script src="~/assets/js/app.js"></script>
+    <!-- Pie Chart js -->
+    <script src="~/assets/js/piechartpagechart.js"></script>
+
+
+
+    <script>
+        $(document).ready(function () {
+            var tableId = '@tableId';
+            $(`#${tableId}`).DataTable({
+                "order": [[0, 'desc']]
+            });
+        });
+
+        function toggleChat() {
+                var chatInbox = document.getElementById("chat-inbox");
+        if (chatInbox.style.display === "none") {
+            chatInbox.style.display = "block";
+                } else {
+            chatInbox.style.display = "none";
+                }
+            }
+    </script>
+
+</body>
+</html>

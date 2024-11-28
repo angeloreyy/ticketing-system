@@ -1,0 +1,174 @@
+﻿@using ASI.Basecode.Data.Models.CustomModels
+@model ASI.Basecode.Data.Models.CustomModels.CustomUser
+
+@{
+    ViewData["Title"] = "Create";
+    var resMsg = TempData["ResMsg"] as AlertMessageContent;
+    var userType = ViewData["UserType"];
+}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-24">
+    <h6 class="fw-semibold mb-0">Add Admin User</h6>
+    <ul class="d-flex align-items-center gap-2">
+        <li class="fw-medium">
+            <a href="index.html" class="d-flex align-items-center gap-1 hover-text-primary">
+                <iconify-icon icon="solar:home-smile-angle-outline" class="icon text-lg"></iconify-icon>
+                Dashboard
+            </a>
+        </li>
+        <li>-</li>
+        <li class="fw-medium">Add User</li>
+    </ul>
+</div>
+
+<div class="card h-100 p-0 radius-12">
+    <div class="card-body p-24">
+        <div class="row justify-content-center">
+            <div class="col-xxl-6 col-xl-8 col-lg-10">
+                <div class="card border">
+                    <div class="card-body">
+                        <h6 class="text-md text-primary-light mb-16">Profile Image</h6>
+
+                        <!-- Upload Image Start -->
+                        <div class="mb-24 mt-16">
+                            <div class="avatar-upload">
+                                <div class="avatar-edit position-absolute bottom-0 end-0 me-24 mt-16 z-1 cursor-pointer">
+                                    <input type='file' id="imageUpload" accept=".png, .jpg, .jpeg" hidden>
+                                    <label for="imageUpload" class="w-32-px h-32-px d-flex justify-content-center align-items-center bg-primary-50 text-primary-600 border border-primary-600 bg-hover-primary-100 text-lg rounded-circle">
+                                        <iconify-icon icon="solar:camera-outline" class="icon"></iconify-icon>
+                                    </label>
+                                </div>
+                                <div class="avatar-preview">
+                                    <div id="imagePreview">
+                                        <img class="w-240-px h-240-px" id="filePreviewCreateUser" style="display:none" />
+                                    </div>
+                                </div>
+                                <img class="w-240-px h-240-px" id="filePreviewCreateUser" style="display:none" />
+                            </div>
+                        </div>
+                        <!-- Upload Image End -->
+                        <form asp-action="Create">
+                            <!--Name-->
+                            <div class="mb-20">
+                                <label asp-for="user.Name" for="name" class="form-label fw-semibold text-primary-light text-sm mb-8">Name <span class="text-danger-600">*</span></label>
+                                <input asp-for="user.Name" type="text" class="form-control radius-8" id="name" placeholder="Enter full name" required>
+                            </div>
+                            <!--Email-->
+                            <div class="mb-20">
+                                <label asp-for="user.Email" asp-for="user.Email" class="form-label fw-semibold text-primary-light text-sm mb-8">Email <span class="text-danger-600">*</span></label>
+                                <input asp-for="user.Email" type="email" class="form-control radius-8" id="email" placeholder="Enter email address" required>
+                            </div>
+                            <!-- Role -->
+                            <div class="form-group pb-3">
+                                <label asp-for="userRole.RoleId" class="form-label fw-semibold text-primary-light text-sm mb-8">Role <span class="text-danger-600">*</span></label>
+                                <select id="roleSelect" class="form-control radius-8 form-select form-select-sm w-auto ps-12 py-6 radius-12 h-40-px" asp-for="userRole.RoleId">
+                                    @foreach (var item in Model.roleList)
+                                    {
+                                        if (item.RoleId == 1)
+                                        {
+                                            <option value="@item.RoleId" selected>@item.RoleName</option>
+                                        } else
+                                        {
+                                            <option value="@item.RoleId">@item.RoleName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <!-- Expertise List -->
+                            <div id="expertiseContainer" class="form-group pb-3" style="display: none;">
+                                <label asp-for="Expertise" class="form-label fw-semibold text-primary-light text-sm mb-8">Expertise <span class="text-danger-600">*</span></label>
+                                <select id="expertiseSelect" class="form-control radius-8 form-select form-select-sm w-auto ps-12 py-6 radius-12 h-40-px" asp-for="Expertise" onchange="toggleOtherInput()">
+                                    @foreach (var item in Model.expertiseList)
+                                    {
+                                        <option value="@item.ExpertiseName">@item.ExpertiseName</option>
+                                    }
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <!-- Other Expertise Input -->
+                            <div id="otherExpertiseContainer" class="form-group pb-3" style="display: none;">
+                                <label asp-for="OtherExpertise" class="form-label fw-semibold text-primary-light text-sm mb-8">Specify Other Expertise <span class="text-danger-600">*</span></label>
+                                <input id="otherExpertise" name="OtherExpertise" type="text" asp-for="OtherExpertise" class="form-control radius-8" placeholder="Specify other expertise">
+                            </div>
+                            <!--Password-->
+                            <div class="mb-20">
+                                <label asp-for="user.Password" for="password" class="form-label fw-semibold text-primary-light text-sm mb-8">
+                                    Password <span class="text-danger-600">*</span>
+                                </label>
+                                <input asp-for="user.Password" type="password" class="form-control radius-8" id="password" placeholder="Enter password" required>
+                            </div>
+                            <!--Confirm password-->
+                            @* <div class="mb-20">
+                                <label for="password" class="form-label fw-semibold text-primary-light text-sm mb-8">Confirm Password <span class="text-danger-600">*</span></label>
+                                <input type="password" class="form-control radius-8" id="confirmPassword" name="confirmPassword" placeholder="Enter password again" required>
+                            </div> *@
+                            <div class="d-flex align-items-center justify-content-center gap-3">
+                                <a asp-action="Index" class="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-56 py-11 radius-8">
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary border border-primary-600 text-md px-56 py-12 radius-8">
+                                    Save
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery library js -->
+<script src="~/assets/js/lib/jquery-3.7.1.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        document.getElementById('file').addEventListener('change', function (event) {
+            var input = event.target;
+            var reader = new FileReader();
+
+            reader.onload = function () {
+                var imgElement = document.getElementById('filePreviewCreateUser');
+                imgElement.src = reader.result;
+                imgElement.style.display = 'block';
+            };
+
+            if (input.files && input.files[0]) {
+                reader.readAsDataURL(input.files[0]);
+            }
+        });
+    });
+
+    document.getElementById('roleSelect').addEventListener('change', function () {
+        const expertiseContainer = document.getElementById('expertiseContainer');
+        const otherExpertiseContainer = document.getElementById('otherExpertiseContainer');
+        const selectedRole = this.options[this.selectedIndex].text;
+
+        if (selectedRole === 'support agent') {
+            expertiseContainer.style.display = 'block';
+        } else {
+            expertiseContainer.style.display = 'none';
+            otherExpertiseContainer.style.display = 'none';
+            document.getElementById('expertiseSelect').value = '';
+            document.getElementById('otherExpertise').value = '';
+        }
+    });
+
+    function toggleOtherInput() {
+        const expertiseSelect = document.getElementById('expertiseSelect');
+        const otherExpertiseContainer = document.getElementById('otherExpertiseContainer');
+        const selectedExpertise = expertiseSelect.value;
+
+        if (selectedExpertise === 'Other') {
+            otherExpertiseContainer.style.display = 'block';
+        } else {
+            otherExpertiseContainer.style.display = 'none';
+            document.getElementById('otherExpertise').value = '';
+        }
+    }
+</script>
+
+@* @section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} *@
